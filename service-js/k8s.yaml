@@ -15,6 +15,7 @@ spec:
       containers:
       - name: my-node-container
         image: my-node-service:latest
+        imagePullPolicy: Never        # <- critical to avoid ErrImagePull for local image
         ports:
         - containerPort: 3000
 ---
