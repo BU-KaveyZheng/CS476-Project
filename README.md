@@ -1,20 +1,7 @@
-### Start Services
-```bash
-minikube start
-minikube image build -t my-node-service:latest .
-kubectl apply -f k8s.yaml
-```
+View `start.sh` for minikube commands
 
-### Restart Service After Changes
-```bash
-minikube image build -t my-node-service:latest . (rebuild)
-kubectl rollout restart deployment my-node-deployment (restart)
-```
+Example URL: `http://127.0.0.1:65107/proxy?service=my-node-service`
 
-### Stop Services
-```bash
-kubectl delete -f k8s.yaml
-```
 
 
 
