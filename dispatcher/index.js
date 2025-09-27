@@ -4,22 +4,28 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 const app = express();
 const port = process.env.PORT || 8080;
 
-/**
- * Decide which backend to route to.
- * Example:  /service-js/*   -> my-node-service:3000
- *           /foo-prod/*     -> my-foo-prod:3000
- */
-function targetForPath(path) {
-  if (path.startsWith("/service-js")) return "http://my-node-service:3000";
-  if (path.startsWith("/foo-prod"))   return "http://my-foo-prod:3000";
-  // default/fallback:
-  return null;
-}
+function targetForRequest(req) {
+  const service = req.query.service; 
+  if (!service) return null;
 
-app.use((req, res, next) => {
-  const target = targetForPath(req.path);
+  // construct URL dynamically
+  const port = 3000;
+  return `http://${service}:${port}`;
+};
+
+// Middleware
+app.use("/proxy", (req, res, next) => {
+  const target = targetForRequest(req);
   if (!target) return res.status(404).send("No matching backend");
-  return createProxyMiddleware({ target, changeOrigin: true })(req, res, next);
+  
+  // strip the /proxy path
+  req.url = req.url.replace(/^\/proxy/, "") 
+
+  return createProxyMiddleware({
+    target,
+    changeOrigin: true,
+    pathRewrite: { '^/proxy': '' } // remove /proxy from path
+  })(req, res, next);
 });
 
 app.listen(port, () => {
