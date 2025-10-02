@@ -12,6 +12,7 @@ spec:
       labels:
         app: my-node-app
     spec:
+      schedulerName: custom-scheduler
       containers:
       - name: my-node-container
         image: my-node-service:latest

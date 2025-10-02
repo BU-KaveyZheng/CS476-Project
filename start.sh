@@ -1,5 +1,7 @@
 #!/bin/bash
 
+go run ./scheduler/main.go
+
 # Build Docker images
 minikube image build -t my-node-service:latest ./service-js
 minikube image build -t dispatcher:latest ./dispatcher
