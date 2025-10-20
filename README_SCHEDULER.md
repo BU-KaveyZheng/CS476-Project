@@ -351,7 +351,7 @@ See [README_CARBON_API.md](README_CARBON_API.md) for Python client documentation
 
 ## 📄 License
 
-This project is part of the CS476 course at Boston University.
+This project is part of the CS476 course at Binghamton University.
 
 ## 🙏 Acknowledgments
 
