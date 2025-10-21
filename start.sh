@@ -1,13 +1,15 @@
 #!/bin/bash
 
-go run ./scheduler/main.go
+# go run ./scheduler/main.go
 
 # Build Docker images
 minikube image build -t my-node-service:latest ./service-js
+minikube image build -t matrix-mult-service:latest ./matrixmult-py
 minikube image build -t dispatcher:latest ./dispatcher
 
 # Apply Kubernetes manifests
 kubectl apply -f ./service-js/k8s.yaml
+kubectl apply -f ./matrixmult-py/k8s.yaml
 kubectl apply -f ./dispatcher/k8s.yaml
 
 # URL for Dispatcher
@@ -15,6 +17,7 @@ kubectl apply -f ./dispatcher/k8s.yaml
 
 # Stop and Delete Services
 # kubectl delete -f ./service-js/k8s.yaml
+# kubectl delete -f ./matrixmult-py/k8s.yaml
 # kubectl delete -f ./dispatcher/k8s.yaml
 
 # View Container STD Output 
