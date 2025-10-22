@@ -4,11 +4,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Hello from /!");
+  res.json({
+    message: "Hello from /!"
+  });
 });
 
 app.get("/service-js", (req, res) => {
-  res.send("Hello from /service-js!");
+  res.json({
+    message: "Hello from /service-js!"
+  });
 });
 
 app.listen(port, () => {
