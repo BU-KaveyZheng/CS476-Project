@@ -1,0 +1,39 @@
+.app-container {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 40%, #4d4d4d 70%, #3a3a3a 100%);
+  padding: 2rem;
+}
+
+.app-header {
+  background: #f2f0ef;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.app-header h1 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.url-div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.url-div label {
+  font-weight: 600;
+  color: #555;
+}
+
+.url-div input {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.url-div input:focus {
+  outline: none;
+}

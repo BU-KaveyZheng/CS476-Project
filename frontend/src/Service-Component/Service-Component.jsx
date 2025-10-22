@@ -1,14 +1,13 @@
 import { useState } from "react";
 import "./style.css";
 
-function ServiceComponent({ name, functions }) {
+function ServiceComponent({ name, functions, dispatcherUrl }) {
   const [responses, setResponses] = useState({});
 
   const handleClick = async (fn) => {
-    setResponses((prev) => ({ ...prev, [fn]: "Loading...", }));
     try {
       const res = await fetch(
-        `http://127.0.0.1:54859/proxy${fn}?service=${name}`,
+        `${dispatcherUrl}/proxy${fn}?service=${name}`,
         { method: "GET" }
       );
       const data = await res.json();

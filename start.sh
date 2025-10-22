@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# go run ./scheduler/main.go
-
 # Build Docker images
+echo "🚀 Building and deploying services to minikube..."
 minikube image build -t my-node-service:latest ./service-js
 minikube image build -t matrix-mult-service:latest ./matrixmult-py
 minikube image build -t dispatcher:latest ./dispatcher
@@ -11,6 +10,11 @@ minikube image build -t dispatcher:latest ./dispatcher
 kubectl apply -f ./service-js/k8s.yaml
 kubectl apply -f ./matrixmult-py/k8s.yaml
 kubectl apply -f ./dispatcher/k8s.yaml
+
+# Start frontend dev server
+echo "🎉 Deployment complete! Starting frontend dev server..."
+cd frontend
+npm run dev
 
 # URL for Dispatcher
 # minikube service dispatcher --url
