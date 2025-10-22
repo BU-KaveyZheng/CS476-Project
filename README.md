@@ -1,12 +1,10 @@
-# Carbon-Aware Kubernetes Custom Dispatcher & Scheduler
+# 🌱 Carbon-Aware Kubernetes Custom Dispatcher & Scheduler
 
-## Quick Start
-
-### Prerequisites
+### ✅ Prerequisites
 - Docker Desktop open and running
 - Minikube installed and running (via `minikube start`)
 
-### Deployment
+### 📦 Deployment
 
 1. **Build and deploy all services:**
 ```bash
@@ -26,4 +24,4 @@
    - Copy the URL from step 2
    - Paste it into the input field on the frontend interface
 
-To rebuild and redeploy after making changes, simply run `./start.sh` again.
+To rebuild and redeploy after making changes, simply run `./start.sh` again. 🔄
