@@ -1,5 +1,3 @@
-import './App.css';
-
 import ServiceComponent from './Service-Component/Service-Component'
 
 function App() {
