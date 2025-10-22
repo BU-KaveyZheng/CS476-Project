@@ -3,20 +3,18 @@
   border-radius: 12px;
   padding: 16px 20px;
   margin: 20px auto;
-  max-width: 600px;
 }
 
 .service-name {
   font-size: 1.5rem;
   color: #222;
   margin-bottom: 12px;
-  border-bottom: 1px solid #eee;
   padding-bottom: 6px;
 }
 
 .function-list {
   display: flex;
-  flex-direction: column; /* vertical stacking */
+  flex-direction: column;
   gap: 14px;
 }
 
@@ -28,14 +26,12 @@
 
 .function-btn {
   background: #007bff;
-  color: white;
   border: none;
   border-radius: 8px;
   padding: 8px 14px;
   cursor: pointer;
   font-size: 0.95rem;
   align-self: flex-start;
-  transition: background 0.2s ease;
 }
 
 .function-btn:hover {
@@ -45,8 +41,8 @@
 .response-box {
   color: #000;
   background: #f8f9fa;
-  border-radius: 8px;
   padding: 10px 12px;
   border: 1px solid #ddd;
+  border-radius: 8px;
   font-family: monospace;
 }
