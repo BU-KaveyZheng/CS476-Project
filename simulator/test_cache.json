@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-11-20T03:53:19.501912",
+  "ttl_minutes": 10,
+  "regions": {
+    "regions": {
+      "US-CAL-CISO": {
+        "zone": "US-CAL-CISO",
+        "carbonIntensity": 357,
+        "datetime": "2025-11-20T08:00:00.000Z",
+        "updatedAt": "2025-11-20T08:40:44.479Z",
+        "createdAt": "2025-11-17T08:11:03.115Z",
+        "emissionFactorType": "lifecycle",
+        "isEstimated": false,
+        "estimationMethod": null,
+        "timestamp": "2025-11-20T03:53:16.331277"
+      },
+      "US-TEX-ERCO": {
+        "zone": "US-TEX-ERCO",
+        "carbonIntensity": 436,
+        "datetime": "2025-11-20T08:00:00.000Z",
+        "updatedAt": "2025-11-20T08:40:30.464Z",
+        "createdAt": "2025-11-17T08:11:03.115Z",
+        "emissionFactorType": "lifecycle",
+        "isEstimated": false,
+        "estimationMethod": null,
+        "timestamp": "2025-11-20T03:53:16.961807"
+      },
+      "US-MIDA-PJM": {
+        "zone": "US-MIDA-PJM",
+        "carbonIntensity": 434,
+        "datetime": "2025-11-20T08:00:00.000Z",
+        "updatedAt": "2025-11-20T08:40:44.479Z",
+        "createdAt": "2025-11-17T08:10:48.515Z",
+        "emissionFactorType": "lifecycle",
+        "isEstimated": true,
+        "estimationMethod": "TIME_SLICER_AVERAGE",
+        "timestamp": "2025-11-20T03:53:18.351384"
+      },
+      "US-MIDW-MISO": {
+        "zone": "US-MIDW-MISO",
+        "carbonIntensity": 601,
+        "datetime": "2025-11-20T08:00:00.000Z",
+        "updatedAt": "2025-11-20T08:40:44.479Z",
+        "createdAt": "2025-11-17T08:10:48.515Z",
+        "emissionFactorType": "lifecycle",
+        "isEstimated": true,
+        "estimationMethod": "TIME_SLICER_AVERAGE",
+        "timestamp": "2025-11-20T03:53:18.997790"
+      }
+    },
+    "sorted_by_carbon": [
+      "US-CAL-CISO",
+      "US-MIDA-PJM",
+      "US-TEX-ERCO",
+      "US-MIDW-MISO"
+    ],
+    "best_region": "US-CAL-CISO",
+    "worst_region": "US-MIDW-MISO"
+  }
+}

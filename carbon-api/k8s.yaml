@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: carbon-api-config
+data:
+  POLL_INTERVAL_MINUTES: "5"
+  CACHE_TTL_MINUTES: "10"
+  CACHE_FILE: "/cache/carbon_cache.json"
+  ZONES: "US-CAL-CISO,US-TEX-ERCO,US-NY-NYIS,US-MIDA-PJM,US-MIDW-MISO"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: carbon-api-secret
+type: Opaque
+stringData:
+  # IMPORTANT: Replace with your actual Electricity Maps API key
+  # Get your API key from: https://portal.electricitymaps.com/
+  # Never commit this file with your real API key!
+  ELECTRICITY_MAPS_API_KEY: "YOUR_API_KEY_HERE"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: carbon-cache-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: standard  # Use 'standard' for minikube, adjust for your cluster
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carbon-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: carbon-api
+  template:
+    metadata:
+      labels:
+        app: carbon-api
+    spec:
+      containers:
+      - name: carbon-poller
+        image: carbon-api:latest
+        imagePullPolicy: Never
+        env:
+        - name: ELECTRICITY_MAPS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: carbon-api-secret
+              key: ELECTRICITY_MAPS_API_KEY
+        - name: POLL_INTERVAL_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: carbon-api-config
+              key: POLL_INTERVAL_MINUTES
+        - name: CACHE_TTL_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: carbon-api-config
+              key: CACHE_TTL_MINUTES
+        - name: CACHE_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: carbon-api-config
+              key: CACHE_FILE
+        - name: ZONES
+          valueFrom:
+            configMapKeyRef:
+              name: carbon-api-config
+              key: ZONES
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /cache
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: carbon-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: carbon-api
+spec:
+  selector:
+    app: carbon-api
+  ports:
+  - port: 8080
+    targetPort: 8080

@@ -5,15 +5,51 @@ function ServiceComponent({ name, functions, dispatcherUrl }) {
   const [responses, setResponses] = useState({});
 
   const handleClick = async (fn) => {
+    if (!dispatcherUrl) {
+      setResponses((prev) => ({ ...prev, [fn]: "Error: Please enter a Dispatcher URL first" }));
+      return;
+    }
+
     try {
-      const res = await fetch(
-        `${dispatcherUrl}/proxy${fn}?service=${name}`,
-        { method: "GET" }
-      );
-      const data = await res.json();
+      const url = `${dispatcherUrl}/proxy${fn}?service=${name}`;
+      console.log('Fetching:', url); // Debug log
+      
+      const res = await fetch(url, { 
+        method: "GET",
+        headers: {
+          'Accept': 'application/json',
+        },
+        mode: 'cors', // Explicitly enable CORS
+      });
+      
+      console.log('Response status:', res.status); // Debug log
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        setResponses((prev) => ({ 
+          ...prev, 
+          [fn]: `Error: HTTP ${res.status} - ${errorText || res.statusText}` 
+        }));
+        return;
+      }
+      
+      const contentType = res.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { message: text };
+      }
+      
       setResponses((prev) => ({ ...prev, [fn]: data, }));
     } catch (err) {
-      setResponses((prev) => ({ ...prev, [fn]: "Error: " + err.message, }));
+      console.error('Fetch error:', err); // Debug log
+      setResponses((prev) => ({ 
+        ...prev, 
+        [fn]: `Error: ${err.message}. This might be a CORS issue. Check browser console for details.` 
+      }));
     }
   };
 

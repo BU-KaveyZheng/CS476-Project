@@ -12,7 +12,12 @@ const port = process.env.PORT || 8080;
 // }));
 
 // ONLY FOR DEVELOPMENT - allows all routes
-app.use(cors()); 
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+})); 
 
 function targetForRequest(req) {
   const service = req.query.service; 
@@ -35,9 +40,18 @@ app.use("/proxy", (req, res, next) => {
     target,
     changeOrigin: true,
     pathRewrite: { '^/proxy': '' },
+    onProxyReq: function(proxyReq, req, res) {
+      console.log(`Proxying ${req.method} ${req.url} to ${target}`);
+    },
     onProxyRes: function(proxyRes, req, res) {
       proxyRes.headers['access-control-allow-origin'] = '*';
       proxyRes.headers['access-control-allow-credentials'] = 'true';
+      proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+      proxyRes.headers['access-control-allow-headers'] = 'Content-Type, Authorization';
+    },
+    onError: function(err, req, res) {
+      console.error('Proxy error:', err);
+      res.status(500).json({ error: 'Proxy error', message: err.message });
     }
   })(req, res, next);
 });

@@ -1,6 +1,6 @@
 module custom-scheduler
 
-go 1.25.1
+go 1.23
 
 require (
 	k8s.io/api v0.31.3
