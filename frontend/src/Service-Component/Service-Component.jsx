@@ -5,15 +5,13 @@ function ServiceComponent({ name, functions, dispatcherUrl }) {
   const [responses, setResponses] = useState({});
 
   const handleClick = async (fn) => {
+    const proxyUrl = `${dispatcherUrl}/proxy${fn}?service=${name}`;
     try {
-      const res = await fetch(
-        `${dispatcherUrl}/proxy${fn}?service=${name}`,
-        { method: "GET" }
-      );
+      const res = await fetch(proxyUrl);
       const data = await res.json();
-      setResponses((prev) => ({ ...prev, [fn]: data, }));
+      setResponses((prev) => ({ ...prev, [fn]: { message: data, proxyUrl }, }));
     } catch (err) {
-      setResponses((prev) => ({ ...prev, [fn]: "Error: " + err.message, }));
+      setResponses((prev) => ({ ...prev, [fn]: { message: "Error: " + err.message, proxyUrl }, }));
     }
   };
 
@@ -23,17 +21,14 @@ function ServiceComponent({ name, functions, dispatcherUrl }) {
       <div className="function-list">
         {functions.map((fn, i) => (
           <div key={i} className="function-item">
-            <button
-              className="function-btn"
-              onClick={() => handleClick(fn)}
-            >
+            <button className="function-btn" onClick={() => handleClick(fn)}>
               {fn}
             </button>
 
             {responses[fn] && (
               <div className="response-box">
-                <strong>Response for {fn}:</strong>
-                <pre>{JSON.stringify(responses[fn], null, 2)}</pre>
+                <pre><strong>Dispatcher URL:</strong> {responses[fn].proxyUrl}</pre>
+                <pre>{JSON.stringify(responses[fn].message, null, 2)}</pre>
               </div>
             )}
           </div>
