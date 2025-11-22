@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-mult-deployment-{{REGION_LOWER}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix-mult-app
+      region: {{REGION}}
+  template:
+    metadata:
+      labels:
+        app: matrix-mult-app
+        region: {{REGION}}
+    spec:
+      schedulerName: custom-scheduler
+      containers:
+      - name: matrix-mult-container
+        image: matrix-mult-service-{{REGION_LOWER}}:latest
+        imagePullPolicy: Never        # <- critical to avoid ErrImagePull for local image
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-mult-service-{{REGION_LOWER}}
+  labels:
+    region: {{REGION}}
+spec:
+  type: ClusterIP
+  selector:
+    app: matrix-mult-app
+    region: {{REGION}}
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+
