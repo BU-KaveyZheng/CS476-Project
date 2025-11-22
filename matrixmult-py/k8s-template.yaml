@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-mult-{{REGION}}
+  labels:
+    app: matrix-mult-{{REGION}}
+    region: {{REGION}}
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix-mult-{{REGION}}
+  template:
+    metadata:
+      labels:
+        app: matrix-mult-{{REGION}}
+        region: {{REGION}}
+    spec:
+      containers:
+        - name: matrix-mult
+          image: matrix-mult-service-{{REGION}}:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-mult-{{REGION}}
+  labels:
+    region: {{REGION}}
+spec:
+  selector:
+    app: matrix-mult-{{REGION}}
+  ports:
+    - port: 80
+      targetPort: 5000
+  type: ClusterIP

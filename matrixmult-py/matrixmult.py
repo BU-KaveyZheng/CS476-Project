@@ -1,37 +1,36 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 import numpy as np
 import time
 
 app = Flask(__name__)
 
+busy = False
+
 @app.route("/multiply")
 def multiply(): 
-    a = np.random.rand(2000, 2000)
-    b = np.random.rand(2000, 2000)
+    global busy
+    if busy: return jsonify({ "error": "service busy" })
+    busy = True
+
+    size = request.args.get("size", default=2000, type=int)
+    a = np.random.rand(size, size)
+    b = np.random.rand(size, size)
     
     start = time.time()
-    
     np.dot(a, b)
-
     end = time.time()
     total_time = end - start
 
-    return jsonify( {
-        "runtime": total_time,
-        "size": "2000, 2000"
-    } )
+    busy = False
+    return jsonify({ "size": f"{size},{size}" })
 
-@app.route("/hello")
-def hello():
-    return jsonify( {
-        "message": "hello world"
-    })
+@app.route("/status")
+def status():
+    return jsonify({ "busy": busy })
 
 @app.route("/")
 def default():
-    return jsonify({
-        "message": "This is the default page."
-    })
+    return jsonify({ "message": "This is the default page." })
 
 if __name__ == "__main__":
     app.run(host = "0.0.0.0", port = 3000)

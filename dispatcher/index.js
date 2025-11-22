@@ -9,13 +9,13 @@ const port = process.env.PORT || 8080;
 // app.use(cors({
 //   origin: 'http://localhost:3000',
 //   credentials: true
-// }));
+// })); 
 
 // ONLY FOR DEVELOPMENT - allows all routes
 app.use(cors()); 
 
 function targetForRequest(req) {
-  const service = req.query.service; 
+  const service = req.query.service;
   if (!service) return null;
 
   // construct URL dynamically
@@ -28,9 +28,6 @@ app.use("/proxy", (req, res, next) => {
   const target = targetForRequest(req);
   if (!target) return res.status(404).send("No matching backend");
   
-  // strip the /proxy path
-  req.url = req.url.replace(/^\/proxy/, "") 
-
   return createProxyMiddleware({
     target,
     changeOrigin: true,

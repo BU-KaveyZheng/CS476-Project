@@ -12,7 +12,7 @@ spec:
       labels:
         app: dispatcher
     spec:
-      schedulerName: custom-scheduler
+      # schedulerName: custom-scheduler
       containers:
       - name: dispatcher
         image: dispatcher:latest

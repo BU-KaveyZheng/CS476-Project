@@ -28,7 +28,7 @@ function App() {
       />
       <ServiceComponent
         name="matrix-mult-service"
-        functions={["/", "/hello", "/multiply"]}
+        functions={["/", "/multiply", "/status"]}
         dispatcherUrl={dispatcherUrl}
       />
     </div>

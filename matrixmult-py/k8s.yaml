@@ -12,7 +12,7 @@ spec:
       labels:
         app: matrix-mult-app
     spec:
-      schedulerName: custom-scheduler
+      # schedulerName: custom-scheduler
       containers:
       - name: matrix-mult-container
         image: matrix-mult-service:latest

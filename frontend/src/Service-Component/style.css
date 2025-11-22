@@ -24,6 +24,12 @@
   gap: 8px;
 }
 
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
 .function-btn {
   background: #007bff;
   border: none;
@@ -36,6 +42,15 @@
 
 .function-btn:hover {
   background: #0056b3;
+}
+
+.checkbox {
+  display: flex;
+  flex-direction: column;  
+  align-items: center;    
+  color: #000;     
+  font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .response-box {
