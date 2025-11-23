@@ -136,39 +136,34 @@ app.post("/carbon-intensity/refresh", async (req, res) => {
 });
 
 // Check if a service is available/free (not busy)
-// For critical requests, we check response time - if it responds quickly, it's likely free
+// Directly queries the /status endpoint to get the actual busy status
 async function isServiceAvailable(serviceName, timeoutMs = 500) {
   try {
-    const startTime = performance.now();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
-    const response = await fetch(`http://${serviceName}:3000/`, {
-      method: 'HEAD',
+    // Query the /status endpoint to get the actual busy status
+    const response = await fetch(`http://${serviceName}:3000/status`, {
+      method: 'GET',
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
-    const responseTime = performance.now() - startTime;
     
-    // Service is available if:
-    // 1. It responds successfully (status < 500)
-    // 2. It responds quickly (< 100ms suggests it's not busy)
-    // If response time is high, the service might be busy handling other requests
-    const isHealthy = response.ok || response.status < 500;
-    const isFast = responseTime < 100; // Fast response suggests not busy
-    
-    if (!isHealthy) {
+    if (!response.ok) {
       console.log(`   ❌ ${serviceName}: Unhealthy (status: ${response.status})`);
       return false;
     }
     
-    if (!isFast) {
-      console.log(`   ⚠️  ${serviceName}: Slow response (${responseTime.toFixed(0)}ms) - might be busy`);
+    const statusData = await response.json();
+    const isBusy = statusData.busy === true;
+    
+    if (isBusy) {
+      console.log(`   ⚠️  ${serviceName}: Busy (status: ${statusData.status || 'unknown'})`);
       return false;
     }
     
-    console.log(`   ✅ ${serviceName}: Available and responsive (${responseTime.toFixed(0)}ms)`);
+    console.log(`   ✅ ${serviceName}: Available (not busy, status: ${statusData.status || 'ready'})`);
     return true;
   } catch (error) {
     // Service doesn't exist, is unreachable, or timed out
@@ -345,7 +340,6 @@ async function targetForRequest(req) {
     
     // Verify the service exists by checking availability
     // If it doesn't exist or is busy, try next lowest latency region
-    console.log(`🔍 Verifying region-specific service exists: ${targetService}...`);
     const serviceExists = await isServiceAvailable(targetService, 300);
     
     if (!serviceExists) {
