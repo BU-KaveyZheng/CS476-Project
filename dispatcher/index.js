@@ -178,6 +178,30 @@ async function isServiceAvailable(serviceName, timeoutMs = 500) {
   }
 }
 
+// Wait for a service to become available, polling until it's free or max wait time
+async function waitForServiceAvailable(serviceName, maxWaitMs = 10000, pollIntervalMs = 500) {
+  const startTime = Date.now();
+  let attempt = 0;
+  
+  while (Date.now() - startTime < maxWaitMs) {
+    attempt++;
+    const isAvailable = await isServiceAvailable(serviceName, pollIntervalMs);
+    
+    if (isAvailable) {
+      console.log(`   ✅ ${serviceName} became available after ${attempt} attempt(s)`);
+      return true;
+    }
+    
+    // Wait before next poll (except on last attempt)
+    if (Date.now() - startTime + pollIntervalMs < maxWaitMs) {
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+    }
+  }
+  
+  console.log(`   ⏱️  ${serviceName} still busy after ${maxWaitMs}ms, giving up`);
+  return false;
+}
+
 // Get the best zone based on critical flag
 async function getBestZone(isCritical, serviceName) {
   if (isCritical) {
@@ -262,34 +286,126 @@ async function getBestZone(isCritical, serviceName) {
     console.warn(`⚠️  No latency data available, using default zone US-NY-NYIS`);
     return 'US-NY-NYIS';
   } else {
-    // Non-critical: use lowest carbon intensity region
+    // Non-critical: use lowest carbon intensity region, wait for availability before trying next
+    // Only consider regions that are actually deployed
     try {
-      const bestRegion = carbonCache.getBestRegion();
-      if (bestRegion) {
-        const regionData = carbonCache.getRegionData(bestRegion);
-        const allRegions = carbonCache.getAllRegions();
-        const sortedRegions = Object.entries(allRegions)
-          .sort(([, a], [, b]) => (a.carbonIntensity ?? Infinity) - (b.carbonIntensity ?? Infinity));
+      const allRegions = carbonCache.getAllRegions();
+      // Filter to only deployed regions and sort by carbon intensity
+      const sortedRegions = Object.entries(allRegions)
+        .filter(([zone]) => DEPLOYED_REGIONS.includes(zone))
+        .sort(([, a], [, b]) => (a.carbonIntensity ?? Infinity) - (b.carbonIntensity ?? Infinity));
+      
+      if (sortedRegions.length === 0) {
+        console.warn(`⚠️  No deployed regions available`);
+        return 'US-NY-NYIS';
+      }
+      
+      // Check if this is a region-specific service that needs availability checking
+      const isRegionSpecificService = serviceName === 'matrix-mult-service';
+      
+      if (isRegionSpecificService) {
+        console.log(`🔍 Checking availability for non-critical request (region-specific service)...`);
+        
+        // Try regions in order of carbon intensity, waiting for availability
+        for (let i = 0; i < sortedRegions.length; i++) {
+          const [zone, regionData] = sortedRegions[i];
+          const zoneLower = zone.toLowerCase();
+          const regionServiceName = `${serviceName}-${zoneLower}`;
+          const fullRegionData = carbonCache.getRegionData(zone);
+          
+          console.log(`   [${i + 1}/${sortedRegions.length}] Checking ${zone} (${regionData.carbonIntensity} gCO₂eq/kWh)...`);
+          
+          // First check if available immediately
+          const isAvailable = await isServiceAvailable(regionServiceName);
+          
+          if (isAvailable) {
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log(`🌱 NON-CRITICAL REQUEST - Region Selection:`);
+            console.log(`   Selected Region: ${zone}`);
+            console.log(`   Reason: Lowest carbon intensity (${regionData.carbonIntensity} gCO₂eq/kWh) AND available`);
+            console.log(`   Carbon Intensity: ${regionData.carbonIntensity} gCO₂eq/kWh`);
+            console.log(`   Updated At: ${fullRegionData?.updatedAt || 'N/A'}`);
+            console.log(`   Available regions considered: ${sortedRegions.length} (deployed regions only)`);
+            if (sortedRegions.length > 1) {
+              console.log(`   Alternative regions (sorted by carbon intensity):`);
+              sortedRegions.forEach(([z, d], idx) => {
+                const marker = idx === i ? '← Selected' : '';
+                console.log(`     ${idx + 1}. ${z}: ${d.carbonIntensity} gCO₂eq/kWh ${marker}`);
+              });
+            }
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            
+            return zone;
+          }
+          
+          // If busy, wait for it to become available
+          console.log(`   ⏳ ${zone} is busy, waiting for availability...`);
+          const becameAvailable = await waitForServiceAvailable(regionServiceName, 10000, 500);
+          
+          if (becameAvailable) {
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log(`🌱 NON-CRITICAL REQUEST - Region Selection:`);
+            console.log(`   Selected Region: ${zone}`);
+            console.log(`   Reason: Lowest carbon intensity (${regionData.carbonIntensity} gCO₂eq/kWh) - became available after waiting`);
+            console.log(`   Carbon Intensity: ${regionData.carbonIntensity} gCO₂eq/kWh`);
+            console.log(`   Updated At: ${fullRegionData?.updatedAt || 'N/A'}`);
+            console.log(`   Available regions considered: ${sortedRegions.length} (deployed regions only)`);
+            if (sortedRegions.length > 1) {
+              console.log(`   Alternative regions (sorted by carbon intensity):`);
+              sortedRegions.forEach(([z, d], idx) => {
+                const marker = idx === i ? '← Selected' : '';
+                console.log(`     ${idx + 1}. ${z}: ${d.carbonIntensity} gCO₂eq/kWh ${marker}`);
+              });
+            }
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            
+            return zone;
+          }
+          
+          // Still busy after waiting, try next region
+          console.log(`   ⚠️  ${zone} still busy after waiting, trying next region...`);
+        }
+        
+        // All regions were busy, use the lowest carbon intensity one anyway
+        const lowestRegion = sortedRegions[0][0];
+        const lowestRegionData = carbonCache.getRegionData(lowestRegion);
+        const lowestCarbonIntensity = sortedRegions[0][1].carbonIntensity;
         
         console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         console.log(`🌱 NON-CRITICAL REQUEST - Region Selection:`);
-        console.log(`   Selected Region: ${bestRegion}`);
-        console.log(`   Reason: Lowest carbon intensity (${regionData?.carbonIntensity || 'N/A'} gCO₂eq/kWh)`);
-        console.log(`   Carbon Intensity: ${regionData?.carbonIntensity || 'N/A'} gCO₂eq/kWh`);
-        console.log(`   Updated At: ${regionData?.updatedAt || 'N/A'}`);
-        console.log(`   Available regions considered: ${sortedRegions.length}`);
+        console.log(`   Selected Region: ${lowestRegion}`);
+        console.log(`   Reason: Lowest carbon intensity (${lowestCarbonIntensity} gCO₂eq/kWh) - all regions busy`);
+        console.log(`   Carbon Intensity: ${lowestCarbonIntensity} gCO₂eq/kWh`);
+        console.log(`   ⚠️  Warning: All regions checked, but all appear busy`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        
+        return lowestRegion;
+      } else {
+        // For non-region-specific services, just use the lowest carbon intensity
+        const lowestRegion = sortedRegions[0][0];
+        const regionData = sortedRegions[0][1];
+        const fullRegionData = carbonCache.getRegionData(lowestRegion);
+        
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.log(`🌱 NON-CRITICAL REQUEST - Region Selection:`);
+        console.log(`   Selected Region: ${lowestRegion}`);
+        console.log(`   Reason: Lowest carbon intensity (${regionData.carbonIntensity} gCO₂eq/kWh)`);
+        console.log(`   Carbon Intensity: ${regionData.carbonIntensity} gCO₂eq/kWh`);
+        console.log(`   Updated At: ${fullRegionData?.updatedAt || 'N/A'}`);
+        console.log(`   Available regions considered: ${sortedRegions.length} (deployed regions only)`);
         if (sortedRegions.length > 1) {
           console.log(`   Alternative regions (sorted by carbon intensity):`);
-          sortedRegions.slice(1, 4).forEach(([zone, data], idx) => {
-            console.log(`     ${idx + 2}. ${zone}: ${data.carbonIntensity} gCO₂eq/kWh`);
+          sortedRegions.forEach(([zone, data], idx) => {
+            const marker = idx === 0 ? '← Selected' : '';
+            console.log(`     ${idx + 1}. ${zone}: ${data.carbonIntensity} gCO₂eq/kWh ${marker}`);
           });
         }
         console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         
-        return bestRegion;
+        return lowestRegion;
       }
     } catch (error) {
-      console.warn(`⚠️  Could not get best carbon region: ${error.message}`);
+      console.warn(`⚠️  Could not get carbon region: ${error.message}`);
     }
     // Fallback to default (New York)
     console.warn(`⚠️  Using fallback zone: US-NY-NYIS`);
