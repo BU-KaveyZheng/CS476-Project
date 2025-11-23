@@ -9,22 +9,39 @@ function ServiceComponent({ name, functions, dispatcherUrl }) {
     const critical = criticalFlags[fn] || false;
     const proxyUrl = `${dispatcherUrl}/proxy${fn}?service=${name}&critical=${critical}`;
     const start = performance.now();
+
     try {
       const res = await fetch(proxyUrl);
-      const data = await res.json();
       const end = performance.now();
+      
+      // Check if response is JSON
+      const contentType = res.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        // If not JSON, get as text
+        const text = await res.text();
+        data = {
+          status: res.status,
+          statusText: res.statusText,
+          body: text
+        };
+      }
+      
       setResponses((prev) => ({
         ...prev, [fn]: {
           message: data, proxyUrl, timeMS: (end - start).toFixed(2)
         },
       }));
     } catch (err) {
+      const end = performance.now();
       setResponses((prev) => ({
         ...prev, [fn]: {
-          message: "Error: " + err.message, proxyUrl, timeMS: (end - start).toFixed(2)
+          message: { error: "Error: " + err.message }, proxyUrl, timeMS: (end - start).toFixed(2)
         },
       }));
-      const end = performance.now();
     }
   };
 
@@ -41,7 +58,6 @@ function ServiceComponent({ name, functions, dispatcherUrl }) {
       <div className="function-list">
         {functions.map((fn, i) => (
           <div key={i} className="function-item">
-
             <div className="buttons">
               <button className="function-btn" onClick={() => handleClick(fn)}>
                 {fn}

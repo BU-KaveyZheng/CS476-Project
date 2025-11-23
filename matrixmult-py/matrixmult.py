@@ -32,5 +32,13 @@ def status():
 def default():
     return jsonify({ "message": "This is the default page." })
 
+@app.route("/status")
+def status():
+    return jsonify({ 
+        "status": "ready",
+        "busy": False,
+        "message": "Service is available"
+    })
+
 if __name__ == "__main__":
     app.run(host = "0.0.0.0", port = 3000)

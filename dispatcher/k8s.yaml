@@ -19,6 +19,16 @@ spec:
         imagePullPolicy: Never     # for local testing with minikube/kind
         ports:
         - containerPort: 8080
+        env:
+        # Use Kubernetes Secret for Electricity Maps API key
+        # Create secret with: kubectl create secret generic electricity-maps-secret --from-literal=api-key=YOUR_API_KEY_HERE
+        # Get your API key from: https://www.electricitymaps.com/
+        - name: ELECTRICITY_MAPS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: electricity-maps-secret
+              key: api-key
+              optional: true
 ---
 apiVersion: v1
 kind: Service
